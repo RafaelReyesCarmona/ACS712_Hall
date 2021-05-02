@@ -35,6 +35,41 @@ rafael.reyes.carmona@gmail.com
 #ifndef ACS712_Hall_h
 #define ACS712_Hall_h
 
+enum ACS712_type {
+	ACS712_05B = 5405,  // 0.185
+	ACS712_20A = 10000, // 0.100
+	ACS712_30A = 15151  // 0.066
+};
 
+class ACS712 {
+    private:
+			#if defined(__LGT8F__)
+			  int _ADC_MAX = 4096;  //ADC max. value (4093) + 1 -> 4096. But it will be 4069 by design.
+			#elif defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+				int _ADC_MAX = 1024;  //ADC max. value (1023) + 1 -> 1024.
+			#else
+				int _ADC_MAX = 1024;  //ADC max. value (1023) + 1 -> 1024.
+			#endif
+        int _PIN;
+		    ACS712_type _TYPE;
+				int _OFFSET;
+				float _VREF = 5.0;
+
+				float _alphaEMA_LOW = 0.91;
+				float _alphaACS712;
+
+    public:
+			  double _current = 0.0;
+
+				ACS712(int, ACS712_type);
+				ACS712(int, ACS712_type, float);
+
+				void setADC(int);
+				void setEMA(float);
+
+				float getCurrent_DC(int numsamples = 15);
+				float getCurrent_AC(int frecuency = 50);
+
+};
 
 #endif
