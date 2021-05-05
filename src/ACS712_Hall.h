@@ -36,9 +36,27 @@ rafael.reyes.carmona@gmail.com
 #define ACS712_Hall_h
 
 enum ACS712_type {
-	ACS712_05B = 5405,  // 0.185
-	ACS712_20A = 10000, // 0.100
-	ACS712_30A = 15151  // 0.066
+	ACS712_05B = 0,  // 0.185
+	ACS712_20A = 1, // 0.100
+	ACS712_30A = 2  // 0.066
+};
+
+static const long ACS712_sens[] PROGMEM = {
+	5405,			//ACS712_05B (1/0.185)
+	10000,		//ACS712_20A (1/0.100)
+	15151			//ACS712_30A (1/0.066)
+};
+
+static const int ACS712_noise[] PROGMEM = {
+	21, 			//ACS712_05B
+	11, 			//ACS712_20A
+	700 				//ACS712_30A
+};
+
+static const long ACS712_slope[] PROGMEM = {
+	80000, 		//ACS712_05B
+	70000, 		//ACS712_20A
+	80000 		//ACS712_30A
 };
 
 class ACS712 {
@@ -51,11 +69,11 @@ class ACS712 {
 				int _ADC_MAX = 1024;  //ADC max. value (1023) + 1 -> 1024.
 			#endif
         int _PIN;
-		    ACS712_type _TYPE;
-				int _OFFSET;
+		    long _TYPE;
+				long _OFFSET;
 				float _VREF = 5.0;
 
-				float _alphaEMA_LOW = 0.91;
+				float _alphaEMA_LOW = 0.81;
 				float _alphaACS712;
 
     public:
@@ -67,7 +85,7 @@ class ACS712 {
 				void setADC(int);
 				void setEMA(float);
 
-				float getCurrent_DC(int numsamples = 15);
+				float getCurrent_DC(int numsamples = F_CPU/1000000);
 				float getCurrent_AC(int frecuency = 50);
 
 };

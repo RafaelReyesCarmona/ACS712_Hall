@@ -31,9 +31,11 @@ rafael.reyes.carmona@gmail.com
 
 ACS712::ACS712(int PIN, ACS712_type TYPE){
   _PIN = PIN;
-  _TYPE = TYPE;
+
+  _TYPE = ACS712_sens[TYPE];
   _alphaACS712 = (_VREF * _TYPE) / (_ADC_MAX * 1000);
   _OFFSET = (_ADC_MAX >> 1);
+  _OFFSET += _ADC_MAX * (ACS712_noise[TYPE]-ACS712_slope[TYPE]/(_VREF*1000)) / 1000;
 
   pinMode(_PIN, INPUT);
   _current = (analogRead(_PIN) - _OFFSET) * _alphaACS712;
@@ -42,10 +44,11 @@ ACS712::ACS712(int PIN, ACS712_type TYPE){
 
 ACS712::ACS712(int PIN, ACS712_type TYPE, float VREF){
   _PIN = PIN;
-  _TYPE = TYPE;
+  _TYPE = ACS712_sens[TYPE];
   _VREF = VREF;
   _alphaACS712 = (_VREF * _TYPE) / (_ADC_MAX * 1000);
   _OFFSET = (_ADC_MAX >> 1);
+  _OFFSET += _ADC_MAX * (ACS712_noise[TYPE]-ACS712_slope[TYPE]/(_VREF*1000)) / 1000;
 
   pinMode(_PIN, INPUT);
   _current = (analogRead(_PIN) - _OFFSET) * _alphaACS712;
@@ -53,9 +56,11 @@ ACS712::ACS712(int PIN, ACS712_type TYPE, float VREF){
 
 
 void ACS712::setADC(int ADC_MAX){
+  int ADJ = _OFFSET - (_ADC_MAX >> 1);
+  _OFFSET = (ADC_MAX >> 1);
+  _OFFSET += ADJ * ADC_MAX / _ADC_MAX;
   _ADC_MAX = ADC_MAX;
-  _alphaACS712 = (_VREF * _TYPE) / (_ADC_MAX * 1000);
-  _OFFSET = (_ADC_MAX >> 1);
+  _alphaACS712 = (_VREF * _TYPE) / (ADC_MAX * 1000);
   _current = (analogRead(_PIN) - _OFFSET) * _alphaACS712;
 }
 
@@ -67,21 +72,38 @@ void ACS712::setEMA(float EMA){
 
 float ACS712::getCurrent_DC(int numsamples){
   float EMA_LOW = analogRead(_PIN);
-  int microdelay;
+  //int microdelay;
 
-  microdelay = (1 <<((1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0)));
-  microdelay = microdelay * 2000000 / F_CPU;
+  //microdelay = (1 <<((1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0)));
+  //microdelay = microdelay * 2000000 / F_CPU;
 
   for (byte i = numsamples; i--; ){
-    delayMicroseconds(microdelay);
+    //delayMicroseconds(microdelay);
+    _NOP();_NOP();_NOP();
     EMA_LOW = (_alphaEMA_LOW * (float)analogRead(_PIN)) + ((1.0 - _alphaEMA_LOW) * EMA_LOW);
   }
-  
-  current = (EMA_LOW - _OFFSET) * _alphaACS712;
-  return (_current = (_alphaEMA_LOW * current) + ((1.0 - _alphaEMA_LOW) * _current))
+  Serial.println(EMA_LOW);
+  Serial.println(_OFFSET);
+
+  float current = (EMA_LOW - _OFFSET) * _alphaACS712;
+  Serial.println(current);
+  return (_current = (_alphaEMA_LOW * current) + ((1.0 - _alphaEMA_LOW) * _current));
 }
 
 
 float ACS712::getCurrent_AC(int frecuency){
+  float EMA_LOW = analogRead(_PIN)-_OFFSET;
+  unsigned long period = 1000000 / frecuency;
+  unsigned long t_start = micros();
 
+  unsigned long EMA_2 = 0, measurements_count = 0;
+
+  while (micros() - t_start < period) {
+    EMA_LOW = (_alphaEMA_LOW * (float)(analogRead(_PIN)-_OFFSET)) + ((1.0 - _alphaEMA_LOW) * EMA_LOW);
+  	EMA_2	+= sq(EMA_LOW);
+  	measurements_count++;
+  }
+
+  _current = sqrt(EMA_2 / measurements_count) * _alphaACS712;
+  return _current;
 }
