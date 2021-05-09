@@ -69,7 +69,7 @@ class ACS712 {
 				int _ADC_MAX = 1024;  //ADC max. value (1023) + 1 -> 1024.
 			#endif
         int _PIN;
-		    long _TYPE;
+		    long _SENS;
 				long _OFFSET;
 				float _VREF = 5.0;
 
@@ -87,6 +87,7 @@ class ACS712 {
 				void analogRef(uint8_t mode);
 
 				float getCurrent_DC(int numsamples = F_CPU/1000000);
+				float getCurrent_DC_LowNoise(int numsamples = F_CPU/1000000);
 				float getCurrent_AC(int frecuency = 50);
 
 };
