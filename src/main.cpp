@@ -32,16 +32,19 @@ rafael.reyes.carmona@gmail.com
 
 #include <ACS712_Hall.h>
 
-ACS712 sensor(A0, ACS712_05B, 5.043);
+ACS712 sensor(A0, ACS712_05B,5.041);
 
 void setup(void){
   Serial.begin(57600);
+  //sensor.setADC(4096);
+  //sensor.analogRef(INTERNAL4V096);      //analogReference(INTERNAL4V096);
+
+  sensor.setADC(4096);
+  analogReadResolution(12);
 }
 
 void loop(void){
-  //analogReference(INTERNAL4V096);
-  //sensor.setADC(4096);
-  double current = sensor.getCurrent_DC();
+  double current = sensor.getCurrent_DC(32);
   Serial.print("Sensor - current is ");
   Serial.print(current);
   Serial.println(" mA.");

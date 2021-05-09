@@ -54,7 +54,7 @@ static const int ACS712_noise[] PROGMEM = {
 };
 
 static const long ACS712_slope[] PROGMEM = {
-	80000, 		//ACS712_05B
+	95000, 		//ACS712_05B
 	70000, 		//ACS712_20A
 	80000 		//ACS712_30A
 };
@@ -84,6 +84,7 @@ class ACS712 {
 
 				void setADC(int);
 				void setEMA(float);
+				void analogRef(uint8_t mode);
 
 				float getCurrent_DC(int numsamples = F_CPU/1000000);
 				float getCurrent_AC(int frecuency = 50);
