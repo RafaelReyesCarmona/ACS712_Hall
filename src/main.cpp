@@ -32,7 +32,7 @@ rafael.reyes.carmona@gmail.com
 
 #include <ACS712_Hall.h>
 
-ACS712 sensor(A0, ACS712_05B,5.051);
+//ACS712 sensor(A0, ACS712_05B,5.051);
 ACS712 sensor1(A0, ACS712_05B,5.051);
 
 void setup(void){
@@ -45,15 +45,17 @@ void setup(void){
 }
 
 void loop(void){
+/*
   float current_lowNoise = sensor.getCurrent_DC_LowNoise();
   Serial.print("Sensor (LowNoise)- current is ");
   Serial.print(current_lowNoise);
   Serial.println(" mA.");
   delay(250);
-
+*/
   float current = sensor1.getCurrent_DC();
   Serial.print("Sensor (AnalogRead)- current is ");
   Serial.print(current);
   Serial.println(" mA.");
   delay(250);
+
 }

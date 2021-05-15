@@ -159,12 +159,17 @@ float ACS712::getCurrent_DC_LowNoise(int numsamples){
     case A5:
       PORT = 5;
       break;
+    case A6:
+      PORT = 6;
+      break;
+    case A7:
+      PORT = 7;
+      break;
   }
-
+  ADMUX |= PORT;
 // Part of this code is get from ForceTronics Blog.
 // https://forcetronic.blogspot.com/2015/01/maximizing-arduinos-adc-resolution-and_11.html
 //-----------------------------------------------------------------------------
-  ADMUX |= PORT;
   ADCSRA |= 1<<ADEN; //Turn the ADC on by setting the ADEN bit to 1 in the ADCSRA register
   ADCSRA |= 1<<ADIE; //Setting the ADIE bit to 1 means when the ADC is done a measurement it generates an interrupt, the interrupt will wake the chip up from low noise sleep
   ADCSRA |= ((1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0));    //Prescaler at 128.
@@ -181,8 +186,9 @@ float ACS712::getCurrent_DC_LowNoise(int numsamples){
     sleep_cpu();
     _NOP();_NOP();
     EMA_LOW = (_alphaEMA_LOW * (float)ADC) + ((1.0 - _alphaEMA_LOW) * EMA_LOW);
+    Serial.println(EMA_LOW);
   }
-
+  ADCSRA &= 0<<ADEN; // Turn off ADC.
 //  Serial.println(EMA_LOW);
 //  Serial.println(_OFFSET);
 
@@ -209,5 +215,8 @@ float ACS712::getCurrent_AC(int frecuency){
 }
 
 
+#ifndef ISR_interrupt
+#define ISR_interrupt
 ISR(ADC_vect) {
 }
+#endif
