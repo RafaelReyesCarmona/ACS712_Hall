@@ -36,7 +36,7 @@ rafael.reyes.carmona@gmail.com
 #define ACS712_Hall_h
 
 enum ACS712_type {
-	ACS712_05B = 0,  // 0.185
+	ACS712_05B = 0, // 0.185
 	ACS712_20A = 1, // 0.100
 	ACS712_30A = 2  // 0.066
 };
@@ -50,7 +50,7 @@ static const long ACS712_sens[] PROGMEM = {
 static const int ACS712_noise[] PROGMEM = {
 	21, 			//ACS712_05B
 	11, 			//ACS712_20A
-	700 				//ACS712_30A
+	7   			//ACS712_30A
 };
 
 static const long ACS712_slope[] PROGMEM = {

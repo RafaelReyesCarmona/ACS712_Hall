@@ -137,64 +137,51 @@ float ACS712::getCurrent_DC(int numsamples){
 
 
 float ACS712::getCurrent_DC_LowNoise(int numsamples){
-  int PORT;
+//#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+  int PORT = _PIN - A0;
   float EMA_LOW;
 
-  switch (_PIN) {
-    case A0:
-      PORT = 0;
-      break;
-    case A1:
-      PORT = 1;
-      break;
-    case A2:
-      PORT = 2;
-      break;
-    case A3:
-      PORT = 3;
-      break;
-    case A4:
-      PORT = 4;
-      break;
-    case A5:
-      PORT = 5;
-      break;
-    case A6:
-      PORT = 6;
-      break;
-    case A7:
-      PORT = 7;
-      break;
-  }
-  ADMUX |= PORT;
-// Part of this code is get from ForceTronics Blog.
-// https://forcetronic.blogspot.com/2015/01/maximizing-arduinos-adc-resolution-and_11.html
-//-----------------------------------------------------------------------------
-  ADCSRA |= 1<<ADEN; //Turn the ADC on by setting the ADEN bit to 1 in the ADCSRA register
-  ADCSRA |= 1<<ADIE; //Setting the ADIE bit to 1 means when the ADC is done a measurement it generates an interrupt, the interrupt will wake the chip up from low noise sleep
-  ADCSRA |= ((1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0));    //Prescaler at 128.
+  ADMUX &= 0xE0;  // Clear Port setting 0 MUX0..3.
+  ADMUX |= PORT;  // Setting Port for read ADC.
+  ADCSRA |= _BV(ADIE); //Setting the ADIE bit to 1 means when the ADC is done a measurement it generates an interrupt, the interrupt will wake the chip up from low noise sleep
+  ADCSRA |= _BV(ADEN); //Turn the ADC on by setting the ADEN bit to 1 in the ADCSRA register
 
   sleep_enable();
   set_sleep_mode(SLEEP_MODE_ADC);
   sei();
   sleep_cpu();
-//-----------------------------------------------------------------------------
-  EMA_LOW = (float)ADC;
+
+  // Gain error correction for __LGT8F__
+  #if defined(__LGT8FX8E__)
+    EMA_LOW = (float)(ADC - (ADC >> 5));
+  #elif defined(__LGT8FX8P__)
+    EMA_LOW = (float)(ADC - (ADC >> 7));
+  #else
+    EMA_LOW = (float)ADC;
+  #endif
 
   for(byte i = numsamples; i--;) {
     sei(); //enable interrupts
     sleep_cpu();
     _NOP();_NOP();
-    EMA_LOW = (_alphaEMA_LOW * (float)ADC) + ((1.0 - _alphaEMA_LOW) * EMA_LOW);
-    Serial.println(EMA_LOW);
+    // Gain error correction for __LGT8F__
+    #if defined(__LGT8FX8E__)
+      EMA_LOW = (_alphaEMA_LOW * (float)(ADC - (ADC >> 5))) + ((1.0 - _alphaEMA_LOW) * EMA_LOW);
+    #elif defined(__LGT8FX8P__)
+      EMA_LOW = (_alphaEMA_LOW * (float)(ADC - (ADC >> 7))) + ((1.0 - _alphaEMA_LOW) * EMA_LOW);
+    #else
+      EMA_LOW = (_alphaEMA_LOW * (float)ADC) + ((1.0 - _alphaEMA_LOW) * EMA_LOW);
+    #endif
   }
-  ADCSRA &= 0<<ADEN; // Turn off ADC.
-//  Serial.println(EMA_LOW);
-//  Serial.println(_OFFSET);
+  //Serial.println(EMA_LOW);
+
+  ADCSRA &= ~(_BV(ADIE));
+  sleep_disable();
 
   float current = (EMA_LOW - (float)_OFFSET) * _alphaACS712;
-//  Serial.println(current);
   return (_current = (_alphaEMA_LOW * current) + ((1.0 - _alphaEMA_LOW) * _current));
+//#endif
+//  return getCurrent_DC(numsamples); // For __LGT8F__
 }
 
 

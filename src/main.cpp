@@ -32,26 +32,26 @@ rafael.reyes.carmona@gmail.com
 
 #include <ACS712_Hall.h>
 
-//ACS712 sensor(A0, ACS712_05B,5.051);
-ACS712 sensor1(A0, ACS712_05B,5.051);
+ACS712 sensor(A1, ACS712_05B,5.044);
+ACS712 sensor1(A1, ACS712_05B,5.044);
 
 void setup(void){
   Serial.begin(57600);
   //sensor.setADC(4096);
-//  sensor.analogRef(INTERNAL4V096);      //analogReference(INTERNAL4V096);
+  //sensor.analogRef(INTERNAL4V096);      //analogReference(INTERNAL4V096);
 
-//  sensor.setADC(4096);
-//  analogReadResolution(11);             // Only work with analogRead().
+  //sensor.setADC(512);
+  //analogReadResolution(9);             // Only work with analogRead().
 }
 
 void loop(void){
-/*
+
   float current_lowNoise = sensor.getCurrent_DC_LowNoise();
   Serial.print("Sensor (LowNoise)- current is ");
   Serial.print(current_lowNoise);
-  Serial.println(" mA.");
+  Serial.println(" mA.  ");
   delay(250);
-*/
+
   float current = sensor1.getCurrent_DC();
   Serial.print("Sensor (AnalogRead)- current is ");
   Serial.print(current);
