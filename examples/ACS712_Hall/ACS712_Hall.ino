@@ -37,11 +37,14 @@ rafael.reyes.carmona@gmail.com
 
  void setup(void){
    Serial.begin(57600);
-   //sensor.setADC(4096);
+ //  sensor.setADC(4096);
  //  sensor.analogRef(INTERNAL4V096);      //analogReference(INTERNAL4V096);
 
  //  sensor.setADC(4096);
  //  analogReadResolution(11);             // Only work with analogRead().
+ 
+ //  sensor.setADC(512);
+ //  analogReadResolution(9);             // Only work with analogRead().
  }
 
  void loop(void){

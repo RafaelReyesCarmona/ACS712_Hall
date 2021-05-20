@@ -49,13 +49,15 @@ void loop(void){
   float current_lowNoise = sensor.getCurrent_DC_LowNoise();
   Serial.print("Sensor (LowNoise)- current is ");
   Serial.print(current_lowNoise);
-  Serial.println(" mA.  ");
-  delay(250);
+  Serial.println(" mA.");
+  delay(10);
 
   float current = sensor1.getCurrent_DC();
   Serial.print("Sensor (AnalogRead)- current is ");
   Serial.print(current);
   Serial.println(" mA.");
+  delay(10);
+
   delay(250);
 
 }
