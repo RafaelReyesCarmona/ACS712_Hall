@@ -70,7 +70,7 @@ pio lib install 12212
 
 --- or ---
 
-1. Search "ACS712_Hall" in search box of _Libraries_ of panel.
+1. Search "ACS712\_Hall" in search box of _Libraries_ of panel.
 <p align=center>
 <img src="img/PlatformIO_1.png" alt="PlatformIO Search screen" width=600>
 </p>
