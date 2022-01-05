@@ -1,7 +1,7 @@
 /*
 ACS712_Hall.h - Arduino library for ACS Current Sensor Hall Effect- 5A, 20A
 and 30A models.
-v0.1
+v0.2
 
 Copyright © 2021 Francisco Rafael Reyes Carmona.
 All rights reserved.
@@ -41,54 +41,44 @@ enum ACS712_type {
 	ACS712_30A = 2  // 0.066
 };
 
-static const long ACS712_sens[] PROGMEM = {
-	5405,			//ACS712_05B (1/0.185)
-	10000,		//ACS712_20A (1/0.100)
-	15151			//ACS712_30A (1/0.066)
+static const float ACS712_sens[] PROGMEM = {
+	5405.4054054,			//ACS712_05B (1/0.185)
+	10000.000000,			//ACS712_20A (1/0.100)
+	15151.515151			//ACS712_30A (1/0.066)
 };
 
-static const int ACS712_noise[] PROGMEM = {
-	21, 			//ACS712_05B
-	11, 			//ACS712_20A
-	7   			//ACS712_30A
-};
-
-static const long ACS712_slope[] PROGMEM = {
-	95000, 		//ACS712_05B
-	70000, 		//ACS712_20A
-	80000 		//ACS712_30A
-};
-
+#ifndef ACS712_slope
+#define ACS712_slope 0
+#endif
 class ACS712 {
     private:
 			#if defined(__LGT8F__)
-			  int _ADC_MAX = 4096;  //ADC max. value (4093) + 1 -> 4096. But it will be 4069 by design.
+			  	int _ADC_MAX = 4096;  //ADC max. value (4095) + 1 -> 4096. But it will be 4069 by design.
 			#elif defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
 				int _ADC_MAX = 1024;  //ADC max. value (1023) + 1 -> 1024.
 			#else
 				int _ADC_MAX = 1024;  //ADC max. value (1023) + 1 -> 1024.
 			#endif
-        int _PIN;
-		    long _SENS;
-				long _OFFSET;
-				float _VREF = 5.0;
+			int _PIN;
+			float _SENS;
+			int _OFFSET;
+			float _VREF = 5.0;
 
-				float _alphaEMA_LOW = 0.81;
-				float _alphaACS712;
+			float _alphaACS712;
+			//#define _alphaACS712 ((_VREF) * (_SENS) / (float)(_ADC_MAX))
 
     public:
-			  double _current = 0.0;
+			double _current = 0.0;
 
-				ACS712(int, ACS712_type);
-				ACS712(int, ACS712_type, float);
+			ACS712(int, ACS712_type);
+			ACS712(int, ACS712_type, float);
 
-				void setADC(int);
-				void setEMA(float);
-				void analogRef(uint8_t mode);
+			void setADC(int);
+			void analogRef(uint8_t mode);
 
-				float getCurrent_DC(int numsamples = F_CPU/1000000);
-				float getCurrent_DC_LowNoise(int numsamples = F_CPU/1000000);
-				float getCurrent_AC(int frecuency = 50);
+			float getCurrent_DC();
+			float getCurrent_DC_LowNoise();
+			float getCurrent_AC(int frecuency = 50);
 
 };
 

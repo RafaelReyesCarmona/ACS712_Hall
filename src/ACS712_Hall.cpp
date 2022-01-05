@@ -1,7 +1,7 @@
 /*
 ACS712_Hall.cpp - Arduino library for ACS Current Sensor Hall Effect- 5A, 20A
 and 30A models.
-v0.1
+v0.2
 
 Copyright © 2021 Francisco Rafael Reyes Carmona.
 All rights reserved.
@@ -29,17 +29,20 @@ rafael.reyes.carmona@gmail.com
 #include "ACS712_Hall.h"
 #include <math.h>
 #include <avr/sleep.h>
+#include "EMA.h"
 
 ACS712::ACS712(int PIN, ACS712_type TYPE){
   _PIN = PIN;
-
   _SENS = ACS712_sens[TYPE];
-  _alphaACS712 = (_VREF * _SENS) / (_ADC_MAX * 1000);
+
+  _alphaACS712 = (_VREF * _SENS) / (float)_ADC_MAX;
   _OFFSET = (_ADC_MAX >> 1);
-  _OFFSET += _ADC_MAX * (ACS712_noise[TYPE]-ACS712_slope[TYPE]/(_VREF*1000)) / 1000;
+  _OFFSET += ACS712_slope;
 
   pinMode(_PIN, INPUT);
-  _current = (float)(analogRead(_PIN) - _OFFSET) * _alphaACS712;
+
+  static EMA<3> EMA_filter(_ADC_MAX >> 1);
+  _current = (float)((int)EMA_filter(analogRead(_PIN)) - _OFFSET) * _alphaACS712;
 }
 
 
@@ -47,12 +50,13 @@ ACS712::ACS712(int PIN, ACS712_type TYPE, float VREF){
   _PIN = PIN;
   _SENS = ACS712_sens[TYPE];
   _VREF = VREF;
-  _alphaACS712 = (_VREF * _SENS) / (_ADC_MAX * 1000);
+  _alphaACS712 = (_VREF * _SENS) / (float)_ADC_MAX;
   _OFFSET = (_ADC_MAX >> 1);
-  _OFFSET += _ADC_MAX * (ACS712_noise[TYPE]-ACS712_slope[TYPE]/(_VREF*1000)) / 1000;
+  _OFFSET += ACS712_slope;
 
   pinMode(_PIN, INPUT);
-  _current = (float)(analogRead(_PIN) - _OFFSET) * _alphaACS712;
+  static EMA<3> EMA_filter(_ADC_MAX >> 1);  
+  _current = (float)((int)EMA_filter(analogRead(_PIN)) - _OFFSET) * _alphaACS712;
 }
 
 
@@ -78,14 +82,9 @@ void ACS712::setADC(int ADC_MAX){
     _ADC_MAX = ADC_MAX;
     _OFFSET += (_ADC_MAX >> 1);
 
-    _alphaACS712 = (_VREF * _SENS) / (_ADC_MAX * 1000);
+    _alphaACS712 = (_VREF * _SENS) / (float)_ADC_MAX;
     _current = (float)(analogRead(_PIN) - _OFFSET) * _alphaACS712;
   }
-}
-
-
-void ACS712::setEMA(float EMA){
-  _alphaEMA_LOW = EMA;
 }
 
 
@@ -107,7 +106,7 @@ void ACS712::analogRef(uint8_t mode){
     case DEFAULT:
       break;
   }
-  _alphaACS712 = (_VREF * _SENS) / (_ADC_MAX * 1000);
+  _alphaACS712 = (_VREF * _SENS) / (float)_ADC_MAX;
   int ADJ = _OFFSET - (_ADC_MAX >> 1);
   _OFFSET = ((int)(VREF * 1000) >> 1);
   _OFFSET += (int)(ADJ * VREF / _VREF);
@@ -115,36 +114,29 @@ void ACS712::analogRef(uint8_t mode){
 }
 
 
-float ACS712::getCurrent_DC(int numsamples){
-  float EMA_LOW = (float)analogRead(_PIN);
-  //int microdelay;
+float ACS712::getCurrent_DC(){
+  static EMA<3> EMA_filter(_ADC_MAX >> 1);
+  int ADC_filtered;
+  ADC_filtered = (int)EMA_filter(analogRead(_PIN)) - _OFFSET;
 
-  //microdelay = (1 <<((1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0)));
-  //microdelay = microdelay * 2000000 / F_CPU;
+  //Serial.println(ADC_filtered);
+  //Serial.println(_OFFSET);
+  //Serial.println(_alphaACS712);
 
-  for (byte i = numsamples; i--; ){
-    _NOP();_NOP();        //delayMicroseconds(microdelay);
-    EMA_LOW = (_alphaEMA_LOW * (float)analogRead(_PIN)) + ((1.0 - _alphaEMA_LOW) * EMA_LOW);
-  }
-
-//  Serial.println(EMA_LOW);
-//  Serial.println(_OFFSET);
-
-  float current = (EMA_LOW - (float)_OFFSET) * _alphaACS712;
-//  Serial.println(current);
-  return (_current = (_alphaEMA_LOW * current) + ((1.0 - _alphaEMA_LOW) * _current));
+  return (_current = (float)(ADC_filtered) * _alphaACS712);
 }
 
 
-float ACS712::getCurrent_DC_LowNoise(int numsamples){
-//#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
-  int PORT = _PIN - A0;
-  float EMA_LOW;
+float ACS712::getCurrent_DC_LowNoise(){
+  uint8_t PORT = _PIN - A0;
 
   ADMUX &= 0xE0;  // Clear Port setting 0 MUX0..3.
   ADMUX |= PORT;  // Setting Port for read ADC.
   ADCSRA |= _BV(ADIE); //Setting the ADIE bit to 1 means when the ADC is done a measurement it generates an interrupt, the interrupt will wake the chip up from low noise sleep
   ADCSRA |= _BV(ADEN); //Turn the ADC on by setting the ADEN bit to 1 in the ADCSRA register
+
+  static EMA<3> EMA_filter(_ADC_MAX >> 1);
+  int ADC_filtered;
 
   sleep_enable();
   set_sleep_mode(SLEEP_MODE_ADC);
@@ -153,52 +145,38 @@ float ACS712::getCurrent_DC_LowNoise(int numsamples){
 
   // Gain error correction for __LGT8F__
   #if defined(__LGT8FX8E__)
-    EMA_LOW = (float)(ADC - (ADC >> 5));
+    ADC_filtered = (int)EMA_filter(ADC - (ADC >> 5)) - _OFFSET;
   #elif defined(__LGT8FX8P__)
-    EMA_LOW = (float)(ADC - (ADC >> 7));
+    ADC_filtered = (int)EMA_filter(ADC - (ADC >> 7)) - _OFFSET;
   #else
-    EMA_LOW = (float)ADC;
+    ADC_filtered = (int)EMA_filter(ADC) - _OFFSET;
   #endif
 
-  for(byte i = numsamples; i--;) {
-    sei(); //enable interrupts
-    sleep_cpu();
-    _NOP();_NOP();
-    // Gain error correction for __LGT8F__
-    #if defined(__LGT8FX8E__)
-      EMA_LOW = (_alphaEMA_LOW * (float)(ADC - (ADC >> 5))) + ((1.0 - _alphaEMA_LOW) * EMA_LOW);
-    #elif defined(__LGT8FX8P__)
-      EMA_LOW = (_alphaEMA_LOW * (float)(ADC - (ADC >> 7))) + ((1.0 - _alphaEMA_LOW) * EMA_LOW);
-    #else
-      EMA_LOW = (_alphaEMA_LOW * (float)ADC) + ((1.0 - _alphaEMA_LOW) * EMA_LOW);
-    #endif
-  }
-  //Serial.println(EMA_LOW);
+  //Serial.println(ADC_filtered);
 
   ADCSRA &= ~(_BV(ADIE));
   sleep_disable();
 
-  float current = (EMA_LOW - (float)_OFFSET) * _alphaACS712;
-  return (_current = (_alphaEMA_LOW * current) + ((1.0 - _alphaEMA_LOW) * _current));
-//#endif
-//  return getCurrent_DC(numsamples); // For __LGT8F__
+  return (_current = (float)(ADC_filtered) * _alphaACS712);
 }
 
 
 float ACS712::getCurrent_AC(int frecuency){
-  float EMA_LOW = (float)(analogRead(_PIN)-_OFFSET);
+  static EMA<3> EMA_filter(_ADC_MAX >> 1);
+  int ADC_filtered;
+
   unsigned long period = 1000000 / frecuency;
   unsigned long t_start = micros();
 
   unsigned long EMA_2 = 0, measurements_count = 0;
 
   while (micros() - t_start < period) {
-    EMA_LOW = (_alphaEMA_LOW * (float)(analogRead(_PIN)-_OFFSET)) + ((1.0 - _alphaEMA_LOW) * EMA_LOW);
-  	EMA_2	+= sq(EMA_LOW);
-  	measurements_count++;
+    ADC_filtered = (int)EMA_filter(analogRead(_PIN)) - _OFFSET;
+    EMA_2	+= sq(ADC_filtered);
+    measurements_count++;
   }
 
-  return (_current = sqrt(EMA_2 / measurements_count) * _alphaACS712);
+  return (_current = sqrt((float)(EMA_2 / measurements_count)) * _alphaACS712);
 }
 
 
