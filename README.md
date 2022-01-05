@@ -3,11 +3,12 @@
 # ACS712_Hall #
 
 [![Library: ACS712](https://img.shields.io/badge/Library-ACS712_Hall-red?style=for-the-badge&logo=Arduino)](README.md)
-[![Version: v0.2](https://img.shields.io/badge/Version-v0.2-blue?style=for-the-badge&logo=v)]()
+[![Version: v0.3](https://img.shields.io/badge/Version-v0.3-blue?style=for-the-badge&logo=v)]()
 
 Arduino library for ACS Current Sensor Hall Effect- 5A, 20A and 30A models.
 ## Installation ##
 
+This library need EMA.h library. https://github.com/RafaelReyesCarmona/EMA. Please, install it before.
 ### Arduino IDE ###
 
 For a tutorial on how to install new libraries for use with the Arduino
@@ -43,14 +44,14 @@ framework = arduino
 lib_deps =
   # RECOMMENDED
   # Accept new functionality in a backwards compatible manner and patches
-  rafaelreyescarmona/ACS712_Hall @ ^0.1
+  rafaelreyescarmona/ACS712_Hall @ ^0.3
 
   # Accept only backwards compatible bug fixes
   # (any version with the same major and minor versions, and an equal or greater patch version)
-  rafaelreyescarmona/ACS712_Hall @ ~0.1
+  rafaelreyescarmona/ACS712_Hall @ ~0.3
 
   # The exact version
-  rafaelreyescarmona/ACS712_Hall @ 0.1
+  rafaelreyescarmona/ACS712_Hall @ 0.3
 ```
 
 For Manual installation in PlatformIO Core:
