@@ -1,7 +1,7 @@
 /*
 ACS712_Hall.h - Arduino library for ACS Current Sensor Hall Effect- 5A, 20A
 and 30A models.
-v0.3
+v0.3.1
 
 Copyright © 2021 Francisco Rafael Reyes Carmona.
 All rights reserved.
@@ -68,7 +68,7 @@ class ACS712 {
 			//#define _alphaACS712 ((_VREF) * (_SENS) / (float)(_ADC_MAX))
 
     public:
-			double _current = 0.0;
+			//double _current = 0.0;
 
 			ACS712(int, ACS712_type);
 			ACS712(int, ACS712_type, float);

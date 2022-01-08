@@ -24,5 +24,10 @@
 	  "atmelavr",
 		"lgt8f",
 	  "teensy"
-	]
+	],
+	"dependencies":
+	{
+		"rafaelreyescarmona/EMA": "*",
+		"rafaelreyescarmona/ADC": "*"
+	}
 }

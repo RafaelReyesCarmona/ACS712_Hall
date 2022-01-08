@@ -1,7 +1,7 @@
 /*
 ACS712_Hall.cpp - Arduino library for ACS Current Sensor Hall Effect- 5A, 20A
 and 30A models.
-v0.3
+v0.3.1
 
 Copyright © 2021 Francisco Rafael Reyes Carmona.
 All rights reserved.
@@ -29,7 +29,8 @@ rafael.reyes.carmona@gmail.com
 #include "ACS712_Hall.h"
 #include <math.h>
 #include <avr/sleep.h>
-#include "EMA.h"
+#include <EMA.h>
+#include <ADC.h>
 
 ACS712::ACS712(int PIN, ACS712_type TYPE){
   _PIN = PIN;
@@ -41,8 +42,8 @@ ACS712::ACS712(int PIN, ACS712_type TYPE){
 
   pinMode(_PIN, INPUT);
 
-  static EMA<3> EMA_filter(_ADC_MAX >> 1);
-  _current = (float)((int)EMA_filter(analogRead(_PIN)) - _OFFSET) * _alphaACS712;
+  //static EMA<3> EMA_filter(_ADC_MAX >> 1);
+  //_current = (float)((int)EMA_filter(analogRead(_PIN)) - _OFFSET) * _alphaACS712;
 }
 
 
@@ -55,8 +56,9 @@ ACS712::ACS712(int PIN, ACS712_type TYPE, float VREF){
   _OFFSET += ACS712_slope;
 
   pinMode(_PIN, INPUT);
-  static EMA<3> EMA_filter(_ADC_MAX >> 1);  
-  _current = (float)((int)EMA_filter(analogRead(_PIN)) - _OFFSET) * _alphaACS712;
+
+  //static EMA<3> EMA_filter(_ADC_MAX >> 1);  
+  //_current = (float)((int)EMA_filter(analogRead(_PIN)) - _OFFSET) * _alphaACS712;
 }
 
 
@@ -83,7 +85,7 @@ void ACS712::setADC(int ADC_MAX){
     _OFFSET += (_ADC_MAX >> 1);
 
     _alphaACS712 = (_VREF * _SENS) / (float)_ADC_MAX;
-    _current = (float)(analogRead(_PIN) - _OFFSET) * _alphaACS712;
+    //_current = (float)(analogRead(_PIN) - _OFFSET) * _alphaACS712;
   }
 }
 
@@ -110,76 +112,40 @@ void ACS712::analogRef(uint8_t mode){
   int ADJ = _OFFSET - (_ADC_MAX >> 1);
   _OFFSET = ((int)(VREF * 1000) >> 1);
   _OFFSET += (int)(ADJ * VREF / _VREF);
-  _current = (float)(analogRead(_PIN) - _OFFSET) * _alphaACS712;
+  //_current = (float)(analogRead(_PIN) - _OFFSET) * _alphaACS712;
 }
 
 
 float ACS712::getCurrent_DC(){
   static EMA<3> EMA_filter(_ADC_MAX >> 1);
-  uint16_t ADC_filtered;
-  ADC_filtered = EMA_filter(analogRead(_PIN));
+  signed int ADC_filtered = -_OFFSET;
+  ADC_filtered += EMA_filter(analogRead(_PIN));
+
 
   //Serial.println(ADC_filtered);
   //Serial.println(_OFFSET);
   //Serial.println(_alphaACS712);
 
-  return (_current = (float)(ADC_filtered) * _alphaACS712 - (float)_OFFSET * _alphaACS712);
+  return ((float)(ADC_filtered) * _alphaACS712);
 }
 
 
 float ACS712::getCurrent_DC_LowNoise(){
   uint8_t PORT = _PIN - A0;
   static EMA<3> EMA_filter(_ADC_MAX >> 1);
-  uint16_t ADC_filtered;
+  signed int ADC_filtered = -_OFFSET;
   uint16_t pVal;
 
   ADMUX &= 0xE0;  // Clear Port setting 0 MUX0..3.
   ADMUX |= PORT;  // Setting Port for read ADC.
   
-
-
-#if defined(__LGT8F__)
-  ADCSRC |= _BV(SPN);
-  ADCSRA |= _BV(ADSC);
-  while (bit_is_set(ADCSRA, ADSC));
-  pVal = ADC;
-  ADCSRC &= ~_BV(SPN);
-#else
-  ADCSRA |= _BV(ADIE); //Setting the ADIE bit to 1 means when the ADC is done a measurement it generates an interrupt, the interrupt will wake the chip up from low noise sleep
-  ADCSRA |= _BV(ADEN); //Turn the ADC on by setting the ADEN bit to 1 in the ADCSRA register
-  sleep_enable();
-  set_sleep_mode(SLEEP_MODE_ADC);
-  sei();
-  sleep_cpu();
-
-  pVal = ADC;
-
-  ADCSRA &= ~(_BV(ADIE));
-  sleep_disable();
-#endif
-
-#if defined(__LGT8F__)
-  uint16_t nVal;
-  ADCSRC |= _BV(SPN);
-  ADCSRA |= _BV(ADSC);
-  while (bit_is_set(ADCSRA, ADSC));
-  nVal = ADC;
-  ADCSRC &= ~_BV(SPN);
-  pVal = (pVal + nVal) >> 1;
-#endif
-
-  // Gain error correction for __LGT8F__
-  #if defined(__LGT8FX8E__)
-    pVal -= (pVal >> 5);
-  #elif defined(__LGT8FX8P__)
-    pVal -= (pVal >> 7);
-  #endif
-
-  ADC_filtered = EMA_filter(pVal);
+  pVal = adcGet_();
+  
+  ADC_filtered += EMA_filter(pVal);
 
   //Serial.println(ADC_filtered);
 
-  return (_current = (float)(ADC_filtered) * _alphaACS712) - (float)_OFFSET * _alphaACS712;
+  return ((float)(ADC_filtered) * _alphaACS712);
 }
 
 

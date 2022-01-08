@@ -3,7 +3,7 @@
 # ACS712_Hall #
 
 [![Library: ACS712](https://img.shields.io/badge/Library-ACS712_Hall-red?style=for-the-badge&logo=Arduino)](README.md)
-[![Version: v0.3](https://img.shields.io/badge/Version-v0.3-blue?style=for-the-badge&logo=v)]()
+[![Version: v0.3.1](https://img.shields.io/badge/Version-v0.3.1-blue?style=for-the-badge&logo=v)]()
 
 Arduino library for ACS Current Sensor Hall Effect- 5A, 20A and 30A models.
 ## Installation ##
