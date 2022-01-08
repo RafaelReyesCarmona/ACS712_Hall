@@ -1,7 +1,7 @@
 /*
 ACS712_Hall.ino - Arduino library for ACS Current Sensor Hall Effect- 5A, 20A
 and 30A models.
-v0.3
+v0.3.1
 
 Copyright © 2021 Francisco Rafael Reyes Carmona.
 All rights reserved.

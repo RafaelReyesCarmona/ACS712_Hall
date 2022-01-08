@@ -1,6 +1,6 @@
 {
 	"name": "ACS712_Hall",
-	"version": "0.3",
+	"version": "0.3.1",
 	"keywords": "current, hall",
 	"description": "Arduino library for ACS Current Sensor Hall Effect- 5A, 20A and 30A models.",
 	"authors":
