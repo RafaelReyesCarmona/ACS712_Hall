@@ -1,7 +1,7 @@
 /*
 ACS712_Hall.cpp - Arduino library for ACS Current Sensor Hall Effect- 5A, 20A
 and 30A models.
-v0.3.1
+v0.3.2
 
 Copyright © 2021 Francisco Rafael Reyes Carmona.
 All rights reserved.
@@ -166,7 +166,7 @@ float ACS712::getCurrent_AC(int frecuency){
     measurements_count++;
   }
 
-  return (_current = sqrt((float)(EMA_2 / measurements_count)) * _alphaACS712);
+  return (sqrt((float)(EMA_2 / measurements_count)) * _alphaACS712);
 }
 
 

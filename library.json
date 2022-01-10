@@ -1,6 +1,6 @@
 {
 	"name": "ACS712_Hall",
-	"version": "0.3.1",
+	"version": "0.3.2",
 	"keywords": "current, hall",
 	"description": "Arduino library for ACS Current Sensor Hall Effect- 5A, 20A and 30A models.",
 	"authors":
@@ -18,12 +18,12 @@
 		"url": "https://github.com/RafaelReyesCarmona/ACS712_Hall.git"
 	},
 	"frameworks": [
-	  "arduino"
+		"arduino"
 	],
 	"platforms": [
-	  "atmelavr",
+		"atmelavr",
 		"lgt8f",
-	  "teensy"
+		"teensy"
 	],
 	"dependencies":
 	{
